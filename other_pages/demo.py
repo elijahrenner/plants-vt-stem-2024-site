@@ -12,9 +12,6 @@ st.divider()
 
 st.subheader("Model Configuration")
 st.text("The highest performing is 152, 50, 0.0001, 128, which is demonstrated here.")
-with st.spinner("Loading model ⌛"):
-    model = tf.keras.models.load_model(f"models/152_50_0.0001_128/")
-    st.success("Done!")
 
 st.subheader("Test Input")
 
@@ -87,6 +84,8 @@ if selected_image is not None or uploaded_image is not None:
             "Tomato___Tomato_mosaic_virus",
             "Tomato___healthy",
         ]
+        st.write("Loading model ⌛")
+        model = tf.keras.models.load_model(f"models/152_50_0.0001_128/")
         st.write("Loaded model ✅")
         if uploaded_image is not None:
             input_image = Image.open(uploaded_image).resize((224, 224)).convert("RGB")

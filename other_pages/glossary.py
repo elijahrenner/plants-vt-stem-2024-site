@@ -1,0 +1,21 @@
+import streamlit as st
+
+st.title("Glossary 📖")
+st.divider()
+
+st.latex(r"\text{accuracy} = \frac{\text{true predictions}}{\text{all predictions}}")    
+st.divider()
+st.latex(r"\text{loss (categorical cross-entropy)} = -\sum_{c=1}^{C} y_{\text{true},c} \cdot \log(y_{\text{pred},c})")
+st.latex(r"\begin{align*} C & : \text{Number of classes} \\ y_{\text{true},c} & : \text{True probability of class } c \\ y_{\text{pred},c} & : \text{Predicted probability of class } c \end{align*}")
+st.divider()
+st.latex(r"""\text{precision}_c = \frac{\text{true positives}_c}{\text{true positives}_c + \text{false positives}_c}""")
+st.latex(r"""\begin{align*} \text{precision}_c & : \text{precision for class } c \\\text{true positives}_c & : \text{instances correctly classified as class } c \\\text{false positives}_c & : \text{instances incorrectly classified as class } c\end{align*}""")
+st.latex(r"""\text{macro-averaged precision (used for multi-class classification)} = \frac{1}{38} \sum_{c=1}^{38} \text{precision}_c""")
+st.divider()
+st.latex(r"\text{recall}_c = \frac{\text{true positives}_c}{\text{true positives}_c + \text{false negatives}_c}")
+st.latex(r"\begin{align*} \text{recall}_c & : \text{recall for class } c \\ \text{true positives}_c & : \text{instances correctly classified as class } c \\ \text{false negatives}_c & : \text{instances incorrectly classified as other classes when they belong to class } c \end{align*}")
+st.latex(r"\text{macro-averaged recall} = \frac{1}{38} \sum_{c=1}^{38} \text{recall}_c")
+st.divider()
+st.latex(r"\text{F1 score}_c = \frac{2 \times \text{precision}_c \times \text{recall}_c}{\text{precision}_c + \text{recall}_c}")
+st.latex(r"\begin{align*} \text{F1 score}_c & : \text{F1 score for class } c \\ \text{precision}_c & : \text{precision for class } c \\ \text{recall}_c & : \text{recall for class } c \end{align*}")
+st.latex(r"\text{macro-averaged F1 score} = \frac{1}{38} \sum_{c=1}^{38} \text{F1 score}_c")

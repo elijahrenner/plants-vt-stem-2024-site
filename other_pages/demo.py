@@ -10,6 +10,12 @@ st.title("Demo 🤖")
 st.caption("*Deeper models take longer to predict.")
 st.divider()
 
+
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model(f"models/152_50_0.0001_128/")
+
+
 st.subheader("Model Configuration")
 st.text("The highest performing is 152, 50, 0.0001, 128, which is demonstrated here.")
 
@@ -84,9 +90,6 @@ if selected_image is not None or uploaded_image is not None:
             "Tomato___Tomato_mosaic_virus",
             "Tomato___healthy",
         ]
-        st.write("Loading model ⌛")
-        model = tf.keras.models.load_model(f"models/152_50_0.0001_128/")
-        st.write("Loaded model ✅")
         if uploaded_image is not None:
             input_image = Image.open(uploaded_image).resize((224, 224)).convert("RGB")
         else:
@@ -95,6 +98,9 @@ if selected_image is not None or uploaded_image is not None:
                 .resize((224, 224))
                 .convert("RGB")
             )
+        st.write("Loading model ⌛")
+        model = load_model()
+        st.write("Loaded model ✅")
         st.write("Loaded input ✅")
         resized_image_array = np.expand_dims(np.asarray(input_image), axis=0)
         st.write("Resized input ✅")

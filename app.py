@@ -11,6 +11,6 @@ show_pages(
         Page("other_pages/demo.py", "Demo", "🤖"),
         Page("other_pages/metrics.py", "Metrics", "📈"),
         Page("other_pages/glossary.py", "Glossary", "📖"),
-        Page("other_pages/references.py", "References", "📖"),
+        Page("other_pages/references.py", "References", "📚"),
     ]
 )

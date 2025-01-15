@@ -1,6 +1,4 @@
 import streamlit as st
-
-# Import tf_keras instead of tensorflow.keras
 import tf_keras as keras
 import os
 import numpy as np
@@ -12,21 +10,29 @@ st.divider()
 
 
 @st.cache_resource
+def combine_split_files(folder, output_file):
+    """
+    Combine split files into the original file.
+    """
+    split_files = sorted(
+        [f for f in os.listdir(folder) if f.startswith("variables_")]
+    )
+    with open(output_file, "wb") as outfile:
+        for file in split_files:
+            with open(os.path.join(folder, file), "rb") as infile:
+                outfile.write(infile.read())
+    return output_file
+
+
+@st.cache_resource
 def load_model():
-    model_path = "models/152_50_0.0001_128/"
-    
-    # Check if the model directory exists
-    if not os.path.exists(model_path):
-        st.error(f"Model directory not found at {model_path}. Please ensure the model is present.")
-        return None
-    
-    try:
-        # Load the model using tf_keras
-        model = keras.models.load_model(model_path)
-        return model
-    except Exception as e:
-        st.error(f"Error loading model: {e}")
-        return None
+    original_file = "models/152_50_0.0001_128/variables/variables.data-00000-of-00001"
+    folder = "models/152_50_0.0001_128/variables"
+    if not os.path.exists(original_file):
+        st.write("Combining split files ⌛")
+        combine_split_files(folder, original_file)
+        st.write("Files combined ✅")
+    return keras.models.load_model(f"models/152_50_0.0001_128/")
 
 
 st.subheader("Model Configuration")
@@ -35,49 +41,34 @@ st.text("The highest performing is 152, 50, 0.0001, 128, which is demonstrated h
 st.subheader("Test Input")
 
 directory = "test"
+images = os.listdir(directory)
 
-# Check if the test directory exists
-if not os.path.exists(directory):
-    st.error(f"Test directory '{directory}' does not exist.")
-    images = []
-else:
-    images = os.listdir(directory)
-
-# Allow user to select an image source
+# Allow user to select an image
 option = st.radio(
     "Select Image Source:", ("Select from provided images", "Upload an image")
 )
 
 if option == "Select from provided images":
-    if images:
-        num_columns = 8
-        col_count = 0
-        for image in images:
-            if col_count % num_columns == 0:
-                columns = st.columns(num_columns)
-            img_path = os.path.join(directory, image)
-            if os.path.isfile(img_path):
-                try:
-                    columns[col_count % num_columns].image(
-                        img_path, use_container_width=True, caption=image
-                    )
-                except Exception as e:
-                    st.warning(f"Could not load image {image}: {e}")
-            col_count += 1
+    num_columns = 8
+    col_count = 0
+    for image in images:
+        if col_count % num_columns == 0:
+            columns = st.columns(num_columns)
+        img_path = os.path.join(directory, image)
+        columns[col_count % num_columns].image(
+            img_path, use_container_width=True, caption=image
+        )
+        col_count += 1
 
-        selected_image = st.selectbox("Select", images)
-        uploaded_image = None
-    else:
-        st.warning(f"No images found in the '{directory}' directory.")
-        selected_image = None
-        uploaded_image = None
+    selected_image = st.selectbox("Select", images)
+    uploaded_image = None
 else:
     uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
     selected_image = None
 
-# Prediction Section
-if (selected_image is not None or uploaded_image is not None):
-    with st.spinner("Predicting ⌛"):
+# Prediction
+if selected_image is not None or uploaded_image is not None:
+    with st.status("Predicting ⌛"):
         class_names = [
             "Apple___Apple_scab",
             "Apple___Black_rot",
@@ -118,40 +109,26 @@ if (selected_image is not None or uploaded_image is not None):
             "Tomato___Tomato_mosaic_virus",
             "Tomato___healthy",
         ]
-        
-        model = load_model()
-        if model is None:
-            st.error("Model could not be loaded. Please check the logs for more details.")
+        if uploaded_image is not None:
+            input_image = Image.open(uploaded_image).resize((224, 224)).convert("RGB")
         else:
-            # Load and preprocess the image
-            try:
-                if uploaded_image is not None:
-                    input_image = Image.open(uploaded_image).resize((224, 224)).convert("RGB")
-                else:
-                    img_path = os.path.join(directory, selected_image)
-                    input_image = Image.open(img_path).resize((224, 224)).convert("RGB")
-            except Exception as e:
-                st.error(f"Error processing image: {e}")
-                input_image = None
-
-            if input_image:
-                try:
-                    # Display the image
-                    st.image(input_image, use_container_width=True)
-
-                    # Convert image to array and preprocess
-                    resized_image_array = np.asarray(input_image)
-                    resized_image_array = resized_image_array / 255.0  # Normalize if required
-                    resized_image_array = np.expand_dims(resized_image_array, axis=0)  # Add batch dimension
-
-                    # Make prediction
-                    raw_tensor_prediction = model.predict(resized_image_array)
-                    predicted_class_index = np.argmax(raw_tensor_prediction, axis=1)[0]
-                    predicted_class = class_names[predicted_class_index]
-                    confidence = raw_tensor_prediction[0][predicted_class_index]
-
-                    # Display results
-                    st.metric(label="Predicted Class", value=predicted_class)
-                    st.metric(label="Confidence", value=f"{confidence * 100:.2f}%")
-                except Exception as e:
-                    st.error(f"Error during prediction: {e}")
+            input_image = (
+                Image.open(os.path.join(directory, selected_image))
+                .resize((224, 224))
+                .convert("RGB")
+            )
+        st.write("Loading model ⌛")
+        model = load_model()
+        st.write("Loaded model ✅")
+        st.write("Loaded input ✅")
+        resized_image_array = np.expand_dims(np.asarray(input_image), axis=0)
+        st.write("Resized input ✅")
+        raw_tensor_prediction = model.predict(resized_image_array)
+        st.write("Extracted features ✅")
+        predicted_class_index = np.argmax(raw_tensor_prediction, axis=1)
+        predicted_class = class_names[predicted_class_index[0]]
+        confidence = raw_tensor_prediction[0][predicted_class_index[0]]
+        st.write("Predicted class ✅")
+        st.image(input_image, use_container_width=True)
+        st.metric(label="Predicted Class", value=predicted_class)
+        st.metric(label="Confidence", value=f"{confidence * 100:.2f}%")
